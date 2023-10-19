@@ -69,7 +69,7 @@ export async function loader({ request }: ActionFunctionArgs) {
     const workedDaysPerYear = businessDaysPerYear - submission.value.daysOffPerYear
     const workedDaysPerMonth = workedDaysPerYear / monthsInYear
     const workedDays = (businessDays * workedDaysPerYear) / businessDaysPerYear
-    const freelanceTJM = freelanceRevenuePerMonth / workedDaysPerMonth
+    const freelanceTJM = submission.value.clientCostPerMonth / workedDaysPerMonth
 
     return json({
       lastSubmission: submission,
