@@ -37,7 +37,6 @@ const schema = z.object({
 const defaultValue = {
   months: monthsInYear,
   daysOffPerYear: 35,
-  clientCostPerMonth: 8_254,
 }
 
 function getDefaultSearchParams(
@@ -112,7 +111,6 @@ export default function Index() {
         method="GET"
         {...form.props}
         preventScrollReset
-        noValidate={false}
         onChange={(event) => submit(event.currentTarget, { preventScrollReset: true })}
         className="grid grid-flow-row gap-6"
       >
@@ -123,7 +121,7 @@ export default function Index() {
 
         <iframe
           src="https://mon-entreprise.urssaf.fr/iframes/simulateur-embauche?integratorUrl=https%253A%252F%252Fentreprise.pole-emploi.fr%252Fcout-salarie%252F&amp;lang=fr&amp;couleur=%255B213%252C67%252C49%255D"
-          className={`transition-height ease-out block w-full border-none ${
+          className={`rounded-md transition-height ease-out block w-full border-none ${
             isSimulatorOpen ? 'h-[500px]' : 'h-0'
           }`}
           title="Simulateur de revenus pour salarié"
@@ -156,19 +154,22 @@ export default function Index() {
         </div>
         <div className="text-xs flex flex-col gap-1 bg-slate-900 rounded-md px-6 py-4">
           <div>
-            <Link to="https://entreprendre.service-public.fr/vosdroits/F36232">
+            <Link target="_blank" to="https://entreprendre.service-public.fr/vosdroits/F36232">
               Cotisation URSSAF
             </Link>{' '}
             : 21,3%
           </div>
           <div>
-            <Link to="https://www.impots.gouv.fr/particulier/questions/comment-declarer-les-revenus-provenant-de-mon-activite-dauto-entrepreneur">
+            <Link
+              target="_blank"
+              to="https://www.impots.gouv.fr/particulier/questions/comment-declarer-les-revenus-provenant-de-mon-activite-dauto-entrepreneur"
+            >
               Abattement forfaitaire sur l'impot sur le revenu
             </Link>{' '}
             : 50%
           </div>
           <div>
-            <Link to="https://www.service-public.fr/particuliers/vosdroits/F34328">
+            <Link target="_blank" to="https://www.service-public.fr/particuliers/vosdroits/F34328">
               Taux d'imposition sur le revenu
             </Link>
           </div>
@@ -183,6 +184,11 @@ export default function Index() {
             <div>41 %</div>
             <div>Plus de 168 994 €</div>
             <div>45 %</div>
+          </div>
+          <div>
+            <Link target="_blank" to="https://github.com/heiso/budget-calculator">
+              Code Open Source
+            </Link>
           </div>
         </div>
       </Form>

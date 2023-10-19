@@ -1,4 +1,4 @@
-# UwU Stack &middot; ![logo](./public/favicon-32x32.png)
+# Budget-calculator &middot; ![logo](./public/favicon-32x32.png)
 
 ## Install and first run
 
@@ -6,7 +6,6 @@
 npm i
 cp .env.tpl .env
 npm run up
-npm run reset-database
 npm run log
 ```
 
@@ -36,12 +35,6 @@ Restart
 
 ```bash
 npm run restart
-```
-
-Truncate Database, Migrate and apply seeds
-
-```bash
-npm run reset-database
 ```
 
 Run Lint
