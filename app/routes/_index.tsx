@@ -104,7 +104,7 @@ export default function Index() {
   return (
     <div className="p-8 space-y-20 max-w-prose mx-auto">
       <h1 className="text-center text-6xl bg-gradient-to-b from-gray-50 to-pink-200 bg-clip-text text-transparent font-bold">
-        Estimation des revenus en freelance
+        Estimation des revenus en auto entreprise
       </h1>
 
       <Form
@@ -116,7 +116,7 @@ export default function Index() {
         className="grid grid-flow-row gap-6"
       >
         <p>
-          Pour utiliser ce calculateur, commencez pas faire la simulation du coût d'un salarié via
+          Pour utiliser ce calculateur, commencez par faire la simulation du coût d'un salarié via
           le simulateur de l'URSSAF.
         </p>
 
@@ -132,7 +132,11 @@ export default function Index() {
           {isSimulatorOpen ? 'Fermer' : "Ouvrir le simulateur de l'URSSAF"}
         </Button>
 
-        <Field label="Coût total client par mois" field={fields.clientCostPerMonth} type="number" />
+        <Field
+          label="Coût total employeur par mois"
+          field={fields.clientCostPerMonth}
+          type="number"
+        />
 
         <div className="grid grid-flow-col gap-6">
           <Field label="Durée du contrat (mois)" field={fields.months} type="number" />
