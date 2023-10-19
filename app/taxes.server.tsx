@@ -22,20 +22,16 @@ const ABATTEMENT_FORFAITAIRE_IMPOT_AE = 0.5
  */
 const COTISATION_URSSAF_AE = 0.213
 
-/**
- * @description Calcul du coût d'un employé pour un employeur (super-brut, brut, net)
- * @link https://entreprise.pole-emploi.fr/cout-salarie/
- */
+export function getTauxImposition(taxableRevenue: number) {
+  return TAUX_IMPOSITION_BY_REVENUE.find(
+    ({ minRevenue, maxRevenue }) => minRevenue < taxableRevenue && taxableRevenue < maxRevenue,
+  )!.rate
+}
 
 export function getFreelanceRevenueAfterTaxes(revenueBeforeTaxes: number) {
   const afterURSSAF = revenueBeforeTaxes - revenueBeforeTaxes * COTISATION_URSSAF_AE
-  const taxableRevenue = afterURSSAF - afterURSSAF * ABATTEMENT_FORFAITAIRE_IMPOT_AE
-  const afterTaxes =
-    afterURSSAF -
-    taxableRevenue *
-      TAUX_IMPOSITION_BY_REVENUE.find(
-        ({ minRevenue, maxRevenue }) => minRevenue < taxableRevenue && taxableRevenue < maxRevenue,
-      )!.rate
+  const taxableRevenue = revenueBeforeTaxes - revenueBeforeTaxes * ABATTEMENT_FORFAITAIRE_IMPOT_AE
+  const afterTaxes = afterURSSAF - taxableRevenue * getTauxImposition(taxableRevenue)
 
   return afterTaxes
 }

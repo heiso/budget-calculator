@@ -8,6 +8,7 @@ import { z } from 'zod'
 import { Field } from '../components/field.tsx'
 import { getFreelanceRevenueAfterTaxes } from '../taxes.server.tsx'
 import { Button } from '../ui/button.tsx'
+import { Link } from '../ui/link.tsx'
 
 /**
  *
@@ -140,7 +141,11 @@ export default function Index() {
 
         <div className="grid grid-flow-col gap-6">
           <Field label="Durée du contrat (mois)" field={fields.months} type="number" />
-          <Field label="Jours de congé par an" field={fields.daysOffPerYear} type="number" />
+          <Field
+            label="Jours de congé payés + RTT par an"
+            field={fields.daysOffPerYear}
+            type="number"
+          />
         </div>
 
         <div className="flex flex-col md:flex-row justify-between gap-6 items-center">
@@ -148,6 +153,37 @@ export default function Index() {
             Calculer
           </Button>
           <ResultText result={result} />
+        </div>
+        <div className="text-xs flex flex-col gap-1 bg-slate-900 rounded-md px-6 py-4">
+          <div>
+            <Link to="https://entreprendre.service-public.fr/vosdroits/F36232">
+              Cotisation URSSAF
+            </Link>{' '}
+            : 21,3%
+          </div>
+          <div>
+            <Link to="https://www.impots.gouv.fr/particulier/questions/comment-declarer-les-revenus-provenant-de-mon-activite-dauto-entrepreneur">
+              Abattement forfaitaire sur l'impot sur le revenu
+            </Link>{' '}
+            : 50%
+          </div>
+          <div>
+            <Link to="https://www.service-public.fr/particuliers/vosdroits/F34328">
+              Taux d'imposition sur le revenu
+            </Link>
+          </div>
+          <div className="ml-4 grid grid-flow-row grid-cols-2">
+            <div>Jusqu'à 10 777 €</div>
+            <div>0 %</div>
+            <div>De 10 778 € à 27 478 €</div>
+            <div>11 %</div>
+            <div>De 27 479 € à 78 570 €</div>
+            <div>30 %</div>
+            <div>De 78 571 € à 168 994 €</div>
+            <div>41 %</div>
+            <div>Plus de 168 994 €</div>
+            <div>45 %</div>
+          </div>
         </div>
       </Form>
     </div>
