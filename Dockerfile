@@ -11,7 +11,7 @@ FROM node:${NODE_VERSION}-slim as base
 RUN apt-get update -qq && \
     apt-get install -y openssl 
 
-LABEL fly_launch_runtime="Remix/Prisma"
+LABEL fly_launch_runtime="Remix"
 
 WORKDIR /app
 
@@ -31,10 +31,6 @@ RUN apt-get update -qq && \
 # Install node modules
 COPY --link package.json package-lock.json ./
 RUN npm install --production=false
-
-# Generate Prisma Client
-COPY --link prisma .
-RUN npx prisma generate
 
 # Copy application code
 COPY --link . .

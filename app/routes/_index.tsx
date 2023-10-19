@@ -1,114 +1,195 @@
-import { json } from '@remix-run/node'
-import { Link as RemixLink, useLoaderData } from '@remix-run/react'
-import type { PropsWithChildren } from 'react'
-import { version } from '../../package.json'
-import { routerPaths } from '../../routes.ts'
+import { useForm } from '@conform-to/react'
+import { getFieldsetConstraint, parse } from '@conform-to/zod'
+import { json, type ActionFunctionArgs } from '@remix-run/node'
+import { Form, useLoaderData, useSubmit } from '@remix-run/react'
+import { addMonths, addYears, differenceInBusinessDays, endOfMonth, monthsInYear } from 'date-fns'
+import { useState } from 'react'
+import { z } from 'zod'
+import { Field } from '../components/field.tsx'
+import { getFreelanceRevenueAfterTaxes } from '../taxes.server.tsx'
 import { Button } from '../ui/button.tsx'
-import { Link } from '../ui/link.tsx'
-import { Logo } from '../ui/logo.tsx'
 
-export function loader() {
+/**
+ *
+ *
+ * en tant que client, je veux savoir combien me coute un free
+ * en tant que free, je veux savoir combien je peux gagner en fonction du budget du client
+ *
+ *
+ */
+
+const schema = z.object({
+  months: z
+    .number({ required_error: 'Champ requis', invalid_type_error: 'Saisie invalide' })
+    .positive('Saisissez une valeur positive'),
+  daysOffPerYear: z
+    .number({
+      required_error: 'Champ requis',
+      invalid_type_error: 'Saisie invalide',
+    })
+    .positive('Saisissez une valeur positive'),
+  clientCostPerMonth: z
+    .number({ required_error: 'Champ requis', invalid_type_error: 'Saisie invalide' })
+    .positive('Saisissez une valeur positive'),
+})
+
+const defaultValue = {
+  months: monthsInYear,
+  daysOffPerYear: 35,
+  clientCostPerMonth: 8_254,
+}
+
+function getDefaultSearchParams(
+  searchParams: URLSearchParams,
+  defaults: Record<string, string | number>,
+) {
+  const newSearchParams = new URLSearchParams()
+  Object.keys(defaults).forEach((key) => {
+    newSearchParams.append(key, searchParams.get(key) || defaults[key].toString())
+  })
+  return newSearchParams
+}
+
+export async function loader({ request }: ActionFunctionArgs) {
+  const searchParams = new URL(request.url).searchParams
+  const submission = parse(
+    searchParams.size === 0 ? getDefaultSearchParams(searchParams, defaultValue) : searchParams,
+    { schema },
+  )
+
+  if (submission.value) {
+    const startDate = endOfMonth(new Date())
+    const endDate = addMonths(startDate, submission.value.months)
+    const businessDays = differenceInBusinessDays(endDate, startDate)
+    const businessDaysPerYear = differenceInBusinessDays(addYears(startDate, 1), startDate)
+    const freelanceRevenuePerMonth = getFreelanceRevenueAfterTaxes(
+      submission.value.clientCostPerMonth,
+    )
+    const freelanceRevenuePerYear = freelanceRevenuePerMonth * monthsInYear
+    const workedDaysPerYear = businessDaysPerYear - submission.value.daysOffPerYear
+    const workedDaysPerMonth = workedDaysPerYear / monthsInYear
+    const workedDays = (businessDays * workedDaysPerYear) / businessDaysPerYear
+    const freelanceTJM = freelanceRevenuePerMonth / workedDaysPerMonth
+
+    return json({
+      lastSubmission: submission,
+      result: {
+        clienCostPerMonth: submission.value.clientCostPerMonth.toLocaleString('fr-FR'),
+        freelanceRevenue: Math.round(freelanceRevenuePerMonth).toLocaleString('fr-FR'),
+        freelanceRevenuePerYear: Math.round(freelanceRevenuePerYear).toLocaleString('fr-FR'),
+        freelanceTJM: Math.round(freelanceTJM).toLocaleString('fr-FR'),
+        workedDays: Math.round(workedDays),
+      },
+    })
+  }
+
   return json({
-    version,
+    lastSubmission: null,
+    result: null,
   })
 }
 
 export default function Index() {
-  const { version } = useLoaderData<typeof loader>()
+  const { lastSubmission, result } = useLoaderData<typeof loader>()
+  const [form, fields] = useForm({
+    defaultValue,
+    ...(lastSubmission && { lastSubmission }),
+    shouldValidate: 'onInput',
+    constraint: getFieldsetConstraint(schema),
+    onValidate: ({ formData }) => parse(formData, { schema }),
+  })
+  const [isSimulatorOpen, setIsSimulatorOpen] = useState(false)
+  const submit = useSubmit()
 
   return (
-    <div className="flex flex-col h-full justify-between">
-      <header className="w-full px-6 py-4 flex flex-row items-center justify-between">
-        <RemixLink
-          to={routerPaths['/']}
-          aria-label="homepage"
-          className="text-xl font-light text-gray-400 transition hover:text-gray-100 active:opacity-80"
-        >
-          <span className="font-bold text-gray-200">UwU</span>&nbsp;Stack
-          <small className="ml-2 self-end text-sm font-extrabold text-pink-50-200">
-            v{version}
-          </small>
-        </RemixLink>
+    <div className="p-8 space-y-20 max-w-prose mx-auto">
+      <h1 className="text-center text-6xl bg-gradient-to-b from-gray-50 to-pink-200 bg-clip-text text-transparent font-bold">
+        Estimation des revenus en freelance
+      </h1>
 
-        <RemixLink
-          to="https://github.com/heiso"
-          target="_blank"
-          aria-label="heiso's github"
-          className="h-6 w-6 fill-gray-400 transition hover:fill-gray-200 active:fill-pink-200"
-        >
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12.026 2c-5.509 0-9.974 4.465-9.974 9.974 0 4.406 2.857 8.145 6.821 9.465.499.09.679-.217.679-.481 0-.237-.008-.865-.011-1.696-2.775.602-3.361-1.338-3.361-1.338-.452-1.152-1.107-1.459-1.107-1.459-.905-.619.069-.605.069-.605 1.002.07 1.527 1.028 1.527 1.028.89 1.524 2.336 1.084 2.902.829.091-.645.351-1.085.635-1.334-2.214-.251-4.542-1.107-4.542-4.93 0-1.087.389-1.979 1.024-2.675-.101-.253-.446-1.268.099-2.64 0 0 .837-.269 2.742 1.021a9.582 9.582 0 0 1 2.496-.336 9.554 9.554 0 0 1 2.496.336c1.906-1.291 2.742-1.021 2.742-1.021.545 1.372.203 2.387.099 2.64.64.696 1.024 1.587 1.024 2.675 0 3.833-2.33 4.675-4.552 4.922.355.308.675.916.675 1.846 0 1.334-.012 2.41-.012 2.737 0 .267.178.577.687.479C19.146 20.115 22 16.379 22 11.974 22 6.465 17.535 2 12.026 2z"></path>
-          </svg>
-        </RemixLink>
-      </header>
-
-      <main className="mb-auto mx-auto px-4 max-w-[80ch] text-center">
-        <div className="flex flex-row items-center justify-center">
-          <Logo />
-          <div className="text-center">
-            <h1 className="text-3xl font-light text-gray-100">
-              <span className="font-bold">Remix</span> Stacks
-            </h1>
-
-            <RemixLink
-              target="_blank"
-              to="https://github.com/topics/remix-stack"
-              aria-label="remix-stack topic on github"
-              className="text-lg font-semibold text-gray-400 transition hover:brightness-125"
-            >
-              Open Source Template
-            </RemixLink>
-          </div>
-        </div>
-
-        <p className="mt-20 mb-40 text-6xl bg-gradient-to-r from-gray-50 to-pink-200 bg-clip-text text-transparent font-bold">
-          Meet UwU-chwan, the only stack you need.
+      <Form
+        method="GET"
+        {...form.props}
+        preventScrollReset
+        noValidate={false}
+        onChange={(event) => submit(event.currentTarget, { preventScrollReset: true })}
+        className="grid grid-flow-row gap-6"
+      >
+        <p>
+          Pour utiliser ce calculateur, commencez pas faire la simulation du coût d'un salarié via
+          le simulateur de l'URSSAF.
         </p>
 
-        <div className="text-xl mb-20">
-          <p>Made with a lowts of gweat technologies !</p>
-          <div className="mt-10 flex flex-row flex-wrap justify-center gap-2">
-            <Techno>Remix</Techno>
-            <Techno>Fly.io</Techno>
-            <Techno>Prisma</Techno>
-            <Techno>Tailwindcss</Techno>
-            <Techno>Typescript</Techno>
-            <Techno>Stripe</Techno>
-            <Techno>Prettier</Techno>
-            <Techno>Docker</Techno>
-            <Techno>Sentry</Techno>
-            <Techno>Lowve</Techno>
-          </div>
+        <iframe
+          src="https://mon-entreprise.urssaf.fr/iframes/simulateur-embauche?integratorUrl=https%253A%252F%252Fentreprise.pole-emploi.fr%252Fcout-salarie%252F&amp;lang=fr&amp;couleur=%255B213%252C67%252C49%255D"
+          className={`transition-height ease-out block w-full border-none ${
+            isSimulatorOpen ? 'h-[500px]' : 'h-0'
+          }`}
+          title="Simulateur de revenus pour salarié"
+        />
+
+        <Button onClick={() => setIsSimulatorOpen(!isSimulatorOpen)}>
+          {isSimulatorOpen ? 'Fermer' : "Ouvrir le simulateur de l'URSSAF"}
+        </Button>
+
+        <Field label="Coût total client par mois" field={fields.clientCostPerMonth} type="number" />
+
+        <div className="grid grid-flow-col gap-6">
+          <Field label="Durée du contrat (mois)" field={fields.months} type="number" />
+          <Field label="Jours de congé par an" field={fields.daysOffPerYear} type="number" />
         </div>
 
-        <div className="flex flex-row justify-center gap-6">
-          <Button as="link" to="https://github.com/heiso/uwu-stack" target="_blank">
-            GitHub
+        <div className="flex flex-col md:flex-row justify-between gap-6 items-center">
+          <Button primary type="submit" className="w-full md:w-fit md:h-full">
+            Calculer
           </Button>
-          <Button primary as="link" to={routerPaths['/login']}>
-            Let's twy it !
-          </Button>
+          <ResultText result={result} />
         </div>
-      </main>
-
-      <footer className="px-6 py-4 text-sm text-center">
-        Had a good{' '}
-        <Link
-          target="_blank"
-          to="https://www.reddit.com/r/ProgrammerHumor/comments/ll34yc/would_you_merge_with_them/"
-        >
-          laugh
-        </Link>
-        , therefore a stupid project had to be done. With sooper dooper lowve by{' '}
-        <Link target="_blank" to="https://github.com/heiso">
-          heiso
-        </Link>
-      </footer>
+      </Form>
     </div>
   )
 }
 
-type TechnoProps = PropsWithChildren
-function Techno({ children }: TechnoProps) {
-  return <div className="px-2 py-1 backdrop-blur-md rounded-md bg-slate-900">{children}</div>
+type ResultTextProps = {
+  result: ReturnType<typeof useLoaderData<typeof loader>>['result']
+}
+
+function ResultText({ result }: ResultTextProps) {
+  if (!result) {
+    return (
+      <div className="relative bg-slate-900 rounded-md px-6 py-4 flex flex-col gap-4">
+        <div className="absolute z-10 top-0 bottom-0 rounded-md left-0 right-0 backdrop-blur-sm"></div>
+        <div>
+          Pour un coût client de <span className="text-pink-500 font-bold">10 000</span>
+          <span className="text-xs"> €</span> le freelance touche{' '}
+          <span className="text-pink-500 font-bold">5 000</span>
+          <span className="text-xs"> € HT</span> après impots, soit{' '}
+          <span className="text-pink-500 font-bold">50 000</span>
+          <span className="text-xs"> € HT</span> par an.
+        </div>
+        <div className="opacity-80 text-sm">
+          ( TJM de <span className="text-pink-500 font-bold">500</span> € HT pour{' '}
+          <span className="text-pink-500 font-bold">200</span> jours travaillés )
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-slate-900 rounded-md px-6 py-4 flex flex-col gap-4">
+      <div>
+        Pour un coût client de{' '}
+        <span className="text-pink-500 font-bold">{result.clienCostPerMonth}</span>
+        <span className="text-xs"> €</span> le freelance touche{' '}
+        <span className="text-pink-500 font-bold">{result.freelanceRevenue}</span>
+        <span className="text-xs"> € HT</span> après impots, soit{' '}
+        <span className="text-pink-500 font-bold">{result.freelanceRevenuePerYear}</span>
+        <span className="text-xs"> € HT</span> par an.
+      </div>
+      <div className="opacity-80 text-sm">
+        ( TJM de <span className="text-pink-500 font-bold">{result.freelanceTJM}</span> € HT pour{' '}
+        <span className="text-pink-500 font-bold">{result.workedDays}</span> jours travaillés )
+      </div>
+    </div>
+  )
 }

@@ -104,6 +104,7 @@ function buildParams(path: string, input: boolean = false) {
 
     writeFileSync(outputPath, formatted)
   } catch (err) {
+    console.error(err)
     console.log(content)
   }
 })()

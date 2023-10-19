@@ -17,11 +17,9 @@ const Input = React.forwardRef<
     <input
       className={`w-full border px-4 py-3 rounded-lg outline-none ${
         error
-          ? 'text-red-500 placeholder:text-red-300 border-red-300 bg-red-100 hover:border-red-500'
-          : 'text-pink-500 placeholder:text-fuchsia-500 border-fuchsia-500 hover:border-pink-500 focus:border-pink-500'
-      } disabled:pointer-events-none ${isFilled ? 'bg-pink-300 border-pink-300' : ''} ${
-        className ?? ''
-      }`}
+          ? 'text-red-500 placeholder:text-red-300 border-red-500 bg-red-100 hover:border-red-500'
+          : 'text-pink-500 placeholder:text-pink-300 hover:border-pink-500 focus:border-pink-500'
+      } disabled:pointer-events-none ${isFilled ? 'bg-pink-100' : ''} ${className ?? ''}`}
       ref={innerRef}
       {...props}
     />

@@ -16,13 +16,6 @@ const config = {
   apps: [
     {
       ...common,
-      name: 'prisma',
-      script: 'npx prisma generate',
-      watch: ['prisma/schema.prisma'],
-    },
-
-    {
-      ...common,
       name: 'routes',
       script: 'npx tsx generate-remix-routes.ts',
       watch: ['generate-remix-routes.ts', 'remix.config.js', './app/routes/**/*.tsx'],
